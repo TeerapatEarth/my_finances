@@ -48,7 +48,7 @@ export default function Home() {
     <div>
       <div className="text-center text-6xl mb-5 font-mono font-semibold text-zinc-50 bg-slate-700">
         <Box paddingTop={3} paddingBottom={20}>
-          My Finances
+          My Finances123
         </Box>
       </div>
       <Grid
