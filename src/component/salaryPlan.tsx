@@ -5,10 +5,15 @@ import {
     ThemeProvider,
 } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
-import { Box, Stack, Grid, TextField, InputAdornment, Typography, IconButton, Snackbar, Alert, List, ListItem, ListItemButton } from '@mui/material';
-import ModalAddRevenue from './modal/modalAddRevenue';
+import {
+    Box, Stack, Grid, TextField, InputAdornment, Typography, IconButton, Snackbar,
+    Alert, Table, TableContainer, TableCell, tableCellClasses, TableBody, TableHead, TableRow, Paper
+} from '@mui/material';
+import ModalAddList from './modal/modalAddList';
 import { useState } from 'react';
-import { Revenue } from '@/model/revenue';
+import { listDetail } from '@/model/listDetail';
+import { styled } from '@mui/material/styles';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 
 
 let theme = createTheme({
@@ -32,30 +37,59 @@ let theme = createTheme({
 
 theme = responsiveFontSizes(theme);
 
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+    [`&.${tableCellClasses.head}`]: {
+        backgroundColor: theme.palette.common.black,
+        color: theme.palette.common.white,
+    },
+    [`&.${tableCellClasses.body}`]: {
+        fontSize: 14,
+    },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+    '&:nth-of-type(odd)': {
+        backgroundColor: theme.palette.action.hover,
+    },
+    // hide last border
+    '&:last-child td, &:last-child th': {
+        border: 0,
+    },
+}));
+
 
 export default function SalaryPlan() {
 
-    const [openModalRevenue, setOpenModalRevenue] = useState(false)
-    const [listRevenue, setListRevenue] = useState<Revenue[]>([{ list: 'Share', amounts: 120000000000000 }, { list: 'Emergency fund', amounts: 12 }])
-    const [openSnackBarAddRevenue, setOpenSnackBarAddRevenue] = useState(false)
+    const [openModalAddList, setOpenModalAddList] = useState(false)
+    const [listRevenue, setListRevenue] = useState<listDetail[]>([])
+    const [listExpenses, setListExpenses] = useState<listDetail[]>([])
+    const [openSnackBarAddList, setOpenSnackBarAddList] = useState(false)
     const [salary, setSalary] = useState<number>(21892)
+    const [typeAddList, setTypeAddList] = useState('revenue')
 
 
-    const handleOpenModalRevenue = () => {
-        setOpenModalRevenue(true);
+    const handleOpenModalAddList = (type: string) => {
+        setTypeAddList(type);
+        setOpenModalAddList(true);
     };
-    const handleCloseModalRevenue = () => {
-        setOpenModalRevenue(false);
+    const handleCloseModalAddList = () => {
+        setOpenModalAddList(false);
     }
     const handdleCloseSnackbar = () => {
-        setOpenSnackBarAddRevenue(false)
+        setOpenSnackBarAddList(false)
     }
-    const addRevenue = (revenue: Revenue) => {
-        const newRevenueList: Revenue[] = listRevenue
-        listRevenue.push(revenue)
-        setListRevenue(newRevenueList)
-        setOpenSnackBarAddRevenue(true)
-        handleCloseModalRevenue()
+    const addList = (listDetail: listDetail) => {
+        if (typeAddList == 'Revenue') {
+            const newRevenueList: listDetail[] = listRevenue
+            listRevenue.push(listDetail)
+            setListRevenue(newRevenueList)
+        } else {
+            const newExpensesList: listDetail[] = listExpenses
+            listExpenses.push(listDetail)
+            setListExpenses(newExpensesList)
+        }
+        setOpenSnackBarAddList(true)
+        handleCloseModalAddList()
     }
     return (
         <div>
@@ -69,7 +103,7 @@ export default function SalaryPlan() {
                         variant="standard"
                         fullWidth
                         type='number'
-                        value={salary   }
+                        value={salary}
                     />
                 </Grid>
             </Grid>
@@ -77,40 +111,51 @@ export default function SalaryPlan() {
 
                 {/* Revenue section */}
                 <Grid item xs={12} md={12} lg={6} xl={6}>
+
                     <ThemeProvider theme={theme} >
                         <Stack direction={'row'}>
                             <Typography sx={{
                                 fontFamily: 'sans-serif',
                             }} mt={0.5} mr={0.5}>Revenue
                             </Typography>
-                            <IconButton size='small' color="primary" onClick={handleOpenModalRevenue}>
+                            <IconButton size='small' color="primary" onClick={() => handleOpenModalAddList('Revenue')}>
                                 <AddIcon />
                             </IconButton>
                         </Stack>
                     </ThemeProvider>
-                    {listRevenue.map((revenue, index) =>
-                        <Box key={index} borderRadius={100}>
-                            <List dense={false} disablePadding>
-                                <ListItemButton>
-                                    <Grid container >
-                                        <Grid item xs={4} textAlign={'end'} >
-                                            <Typography variant="subtitle1" noWrap>
-                                                {revenue.list}
-                                            </Typography>
-                                        </Grid>
-                                        <Grid item xs={1}  textAlign={'center'}>
-                                            <Typography variant="subtitle1"> : </Typography>
-                                        </Grid>
-                                        <Grid item xs={6}  textAlign={'center'}>
-                                            <Typography variant="subtitle1">
-                                                {revenue.amounts}
-                                            </Typography>
-                                        </Grid>
-                                    </Grid>
-                                </ListItemButton>
-                            </List>
-                        </Box>
-                    )}
+                    <Box margin={2} marginBottom={5}>
+                        {listRevenue.length ?
+                            <TableContainer component={Paper}>
+                                <Table sx={{ minWidth: 100 }} aria-label="customized table">
+                                    <TableHead>
+                                        <TableRow>
+                                            <StyledTableCell >List</StyledTableCell>
+                                            <StyledTableCell align={'right'}>Amount ( Baht )</StyledTableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {listRevenue.map((revenu, index) => (
+                                            <StyledTableRow key={index}>
+                                                <StyledTableCell component="th" scope="row">
+                                                    {revenu.list}
+                                                </StyledTableCell>
+                                                <StyledTableCell align={'right'}>{revenu.amounts}</StyledTableCell>
+                                            </StyledTableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                            :
+                            <Box textAlign={'center'} mt={10}>
+                                <Typography sx={{
+                                    fontFamily: 'sans-serif',
+                                }} mb={1}>
+                                    No revenu
+                                </Typography>
+                                <InsertDriveFileIcon style={{ fontSize: 60, color: 'gray' }} />
+                            </Box>
+                        }
+                    </Box>
                 </Grid>
 
                 {/* Expenses section */}
@@ -120,22 +165,56 @@ export default function SalaryPlan() {
                             <Typography sx={{
                                 fontFamily: 'sans-serif',
                             }} mt={0.5} mr={0.5}>Expenses</Typography>
-                            <IconButton size='small' color="primary">
+                            <IconButton size='small' color="primary" onClick={() => handleOpenModalAddList('Expenses')}>
                                 <AddIcon />
                             </IconButton>
                         </Stack>
                     </ThemeProvider>
+                    <Box margin={2}>
+                        {listExpenses.length ? <TableContainer component={Paper}>
+                            <Table sx={{ minWidth: 100 }} aria-label="customized table">
+                                <TableHead>
+                                    <TableRow>
+                                        <StyledTableCell>List</StyledTableCell>
+                                        <StyledTableCell align={'right'}>Amount ( Baht )</StyledTableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {listExpenses.map((expenses, index) => (
+                                        <StyledTableRow key={index}>
+                                            <StyledTableCell component="th" scope="row">
+                                                {expenses.list}
+                                            </StyledTableCell>
+                                            <StyledTableCell align={'right'}>{expenses.amounts}</StyledTableCell>
+                                        </StyledTableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                            :
+                            <Box textAlign={'center'} mt={10}>
+                                <Typography sx={{
+                                    fontFamily: 'sans-serif',
+                                }} mb={1}>
+                                    No expenses
+                                </Typography>
+                                <InsertDriveFileIcon style={{ fontSize: 60, color: 'gray' }} />
+                            </Box>
+                        }
+                    </Box>
                 </Grid>
             </Grid>
 
-            <ModalAddRevenue
-                open={openModalRevenue}
-                onClose={handleCloseModalRevenue}
-                addRevenue={addRevenue} />
+            <ModalAddList
+                open={openModalAddList}
+                onClose={handleCloseModalAddList}
+                addList={addList} 
+                type={typeAddList}
+                />
 
             <Snackbar
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                open={openSnackBarAddRevenue}
+                open={openSnackBarAddList}
                 autoHideDuration={3000}
                 onClose={handdleCloseSnackbar}
             >
@@ -144,7 +223,7 @@ export default function SalaryPlan() {
                     severity="success"
                     sx={{ width: '100%' }}
                 >
-                    Add new revenu success
+                    Add new {typeAddList.toLowerCase()} success
                 </Alert>
             </Snackbar>
         </div>

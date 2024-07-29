@@ -18,13 +18,11 @@ export default function modalAddRevenue(props: any) {
         setValueAmounts(value)
     }
 
-    const addRevenue = () => {
-        props.addRevenue({ list: valueList, amounts: valueAmounts })
+    const addList = () => {
+        props.addList({ list: valueList, amounts: valueAmounts })
         setValueList('')
         setValueAmounts('')
     }
-
-
 
     return (
         <div>
@@ -33,7 +31,7 @@ export default function modalAddRevenue(props: any) {
                 fullWidth
                 open={props.open}
                 onClose={props.onClose}>
-                <DialogTitle>Revenue</DialogTitle>
+                <DialogTitle>{props.type}</DialogTitle>
                 <DialogContent >
                     <Grid
                         container
@@ -78,7 +76,7 @@ export default function modalAddRevenue(props: any) {
                         </Button>
                     </Box>
                     <Box margin={2}>
-                        <Button onClick={addRevenue} autoFocus >
+                        <Button onClick={addList} autoFocus >
                             Add
                         </Button>
                     </Box>
