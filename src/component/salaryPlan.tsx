@@ -10,10 +10,16 @@ import {
     Alert, Table, TableContainer, TableCell, tableCellClasses, TableBody, TableHead, TableRow, Paper
 } from '@mui/material';
 import ModalAddList from './modal/modalAddList';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { listDetail } from '@/model/listDetail';
 import { styled } from '@mui/material/styles';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from '@/app/redux';
+import { initialRevenue, addRevenue } from '@/app/redux/listRevenueReducer';
+import { initialExpenses, addExpenses } from '@/app/redux/listExpensesReducer';
+import { toggleFirstRenderSalary } from '@/app/redux/firstRenderReducer';
+import { setSalary } from '@/app/redux/salaryReducer';
 
 
 let theme = createTheme({
@@ -60,11 +66,14 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 
 export default function SalaryPlan() {
 
+    const dispatch = useDispatch();
+    const listRevenue = useSelector((state: RootState) => state.revenue.listRevenue)
+    const listExpenses = useSelector((state: RootState) => state.expenses.listExpenses)
+    const firstRenderSalary = useSelector((state: RootState) => state.firstRender.firstRenderSalary)
+    const salary = useSelector((state: RootState) => state.salary.salary)
+
     const [openModalAddList, setOpenModalAddList] = useState(false)
-    const [listRevenue, setListRevenue] = useState<listDetail[]>([])
-    const [listExpenses, setListExpenses] = useState<listDetail[]>([])
     const [openSnackBarAddList, setOpenSnackBarAddList] = useState(false)
-    const [salary, setSalary] = useState<number>(21892)
     const [typeAddList, setTypeAddList] = useState('revenue')
 
 
@@ -80,17 +89,51 @@ export default function SalaryPlan() {
     }
     const addList = (listDetail: listDetail) => {
         if (typeAddList == 'Revenue') {
-            const newRevenueList: listDetail[] = listRevenue
-            listRevenue.push(listDetail)
-            setListRevenue(newRevenueList)
+            dispatch(addRevenue(listDetail))
         } else {
-            const newExpensesList: listDetail[] = listExpenses
-            listExpenses.push(listDetail)
-            setListExpenses(newExpensesList)
+            dispatch(addExpenses(listDetail))
         }
         setOpenSnackBarAddList(true)
         handleCloseModalAddList()
     }
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const listDetail : listDetail[]= [{
+                    list: 'test 1',
+                    amounts: 123,
+                },
+                {
+                    list: 'test 2',
+                    amounts: 123,
+                }]
+                dispatch(initialRevenue(listDetail))
+                const listDetailEx : listDetail[] = [{
+                    list: 'test 1 ex',
+                    amounts: 123,
+                },
+                {
+                    list: 'test 2 ex',
+                    amounts: 123,
+                },
+                {
+                    list: 'test 3 ex',
+                    amounts: 123,
+                }]
+                dispatch(initialExpenses(listDetailEx))
+                dispatch(setSalary(21892))
+                dispatch(toggleFirstRenderSalary(true))
+            } catch (error: any) {
+                console.error(error.message);
+            }
+        }
+
+        if (!firstRenderSalary) {
+            fetchData();
+        }
+    }, []);
+
     return (
         <div>
             <Grid container mt={1}>
@@ -150,7 +193,7 @@ export default function SalaryPlan() {
                                 <Typography sx={{
                                     fontFamily: 'sans-serif',
                                 }} mb={1}>
-                                    No revenu
+                                    No revenue
                                 </Typography>
                                 <InsertDriveFileIcon style={{ fontSize: 60, color: 'gray' }} />
                             </Box>
@@ -208,9 +251,9 @@ export default function SalaryPlan() {
             <ModalAddList
                 open={openModalAddList}
                 onClose={handleCloseModalAddList}
-                addList={addList} 
+                addList={addList}
                 type={typeAddList}
-                />
+            />
 
             <Snackbar
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
