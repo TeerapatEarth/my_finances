@@ -1,5 +1,5 @@
 import React from 'react'
-import { Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextField, Button, Box, InputAdornment } from '@mui/material'
+import { Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextField, Button, Box, InputAdornment, CircularProgress } from '@mui/material'
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useState } from 'react';
@@ -18,10 +18,12 @@ export default function modalAddRevenue(props: any) {
         setValueAmounts(value)
     }
 
-    const addList = () => {
-        props.addList({ list: valueList, amounts: valueAmounts })
-        setValueList('')
-        setValueAmounts('')
+    const addList = async () => {
+        const result = await props.addList({ list: valueList, amounts: valueAmounts })
+        if (result) {
+            setValueList('')
+            setValueAmounts('')
+        }
     }
 
     return (
@@ -69,20 +71,30 @@ export default function modalAddRevenue(props: any) {
                         </Grid>
                     </Grid>
                 </DialogContent>
-                <DialogActions>
-                    <Box margin={2}>
-                        <Button autoFocus onClick={props.onClose} >
-                            Cancel
-                        </Button>
+                {props.showLoading ?
+                    <Box margin={2} mb={5}>
+                        <Grid
+                            container
+                            alignItems="center"
+                            justifyContent="center">
+                            <CircularProgress />
+                        </Grid>
                     </Box>
-                    <Box margin={2}>
-                        <Button onClick={addList} autoFocus >
-                            Add
-                        </Button>
-                    </Box>
-                </DialogActions>
+                    :
+                    <DialogActions>
+                        <Box margin={2}>
+                            <Button autoFocus onClick={props.onClose} >
+                                Cancel
+                            </Button>
+                        </Box>
+                        <Box margin={2}>
+                            <Button onClick={addList} autoFocus >
+                                Add
+                            </Button>
+                        </Box>
+                    </DialogActions>
+                }
             </Dialog>
-
         </div>
     )
 }

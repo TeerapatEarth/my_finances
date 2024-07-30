@@ -20,6 +20,8 @@ import { initialRevenue, addRevenue } from '@/app/redux/listRevenueReducer';
 import { initialExpenses, addExpenses } from '@/app/redux/listExpensesReducer';
 import { toggleFirstRenderSalary } from '@/app/redux/firstRenderReducer';
 import { setSalary } from '@/app/redux/salaryReducer';
+import RevenueService from '../service/RevenueService';
+import ExpensesService from '@/service/ExpensesService';
 
 
 let theme = createTheme({
@@ -74,6 +76,8 @@ export default function SalaryPlan() {
 
     const [openModalAddList, setOpenModalAddList] = useState(false)
     const [openSnackBarAddList, setOpenSnackBarAddList] = useState(false)
+    const [openSnackBarAddListFail, setOpenSnackBarAddListFail] = useState(false)
+    const [showLoadingAdd, setShowLoadingAdd] = useState(false)
     const [typeAddList, setTypeAddList] = useState('revenue')
 
 
@@ -87,41 +91,48 @@ export default function SalaryPlan() {
     const handdleCloseSnackbar = () => {
         setOpenSnackBarAddList(false)
     }
-    const addList = (listDetail: listDetail) => {
+    const handdleCloseSnackbarFail = () => {
+        setOpenSnackBarAddListFail(false)
+    }
+    const addList = async (listDetail: listDetail) => {
+        setShowLoadingAdd(true)
+        let resultAddList = true
         if (typeAddList == 'Revenue') {
-            dispatch(addRevenue(listDetail))
+            const response: listDetail | null = await RevenueService.addRevenue(listDetail)
+            if (response) {
+                dispatch(addRevenue(response))
+                setOpenSnackBarAddList(true)
+                handleCloseModalAddList()
+            } else {
+                setOpenSnackBarAddListFail(true)
+                resultAddList = false
+            }
         } else {
-            dispatch(addExpenses(listDetail))
+            const response: listDetail | null = await ExpensesService.addExpenses(listDetail)
+            if (response) {
+                dispatch(addExpenses(response))
+                setOpenSnackBarAddList(true)
+                handleCloseModalAddList()
+            } else {
+                setOpenSnackBarAddListFail(true)
+                resultAddList = false
+            }
         }
-        setOpenSnackBarAddList(true)
-        handleCloseModalAddList()
+        setShowLoadingAdd(false)
+        return resultAddList
     }
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const listDetail : listDetail[]= [{
-                    list: 'test 1',
-                    amounts: 123,
-                },
-                {
-                    list: 'test 2',
-                    amounts: 123,
-                }]
-                dispatch(initialRevenue(listDetail))
-                const listDetailEx : listDetail[] = [{
-                    list: 'test 1 ex',
-                    amounts: 123,
-                },
-                {
-                    list: 'test 2 ex',
-                    amounts: 123,
-                },
-                {
-                    list: 'test 3 ex',
-                    amounts: 123,
-                }]
-                dispatch(initialExpenses(listDetailEx))
+                const responseRevenue: listDetail[] | null = await RevenueService.getAllRevenue()
+                if (responseRevenue) {
+                    dispatch(initialRevenue(responseRevenue))
+                }
+                const responseExpenses: listDetail[] | null = await ExpensesService.getAllExpenses()
+                if (responseExpenses) {
+                    dispatch(initialExpenses(responseExpenses))
+                }
                 dispatch(setSalary(21892))
                 dispatch(toggleFirstRenderSalary(true))
             } catch (error: any) {
@@ -130,7 +141,9 @@ export default function SalaryPlan() {
         }
 
         if (!firstRenderSalary) {
-            fetchData();
+            return () => {
+                fetchData()
+            }
         }
     }, []);
 
@@ -177,8 +190,8 @@ export default function SalaryPlan() {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {listRevenue.map((revenu, index) => (
-                                            <StyledTableRow key={index}>
+                                        {listRevenue.map((revenu) => (
+                                            <StyledTableRow key={revenu._id}>
                                                 <StyledTableCell component="th" scope="row">
                                                     {revenu.list}
                                                 </StyledTableCell>
@@ -253,6 +266,7 @@ export default function SalaryPlan() {
                 onClose={handleCloseModalAddList}
                 addList={addList}
                 type={typeAddList}
+                showLoading={showLoadingAdd}
             />
 
             <Snackbar
@@ -266,7 +280,21 @@ export default function SalaryPlan() {
                     severity="success"
                     sx={{ width: '100%' }}
                 >
-                    Add new {typeAddList.toLowerCase()} success
+                    Add new {typeAddList.toLowerCase()} success.
+                </Alert>
+            </Snackbar>
+            <Snackbar
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                open={openSnackBarAddListFail}
+                autoHideDuration={3000}
+                onClose={handdleCloseSnackbarFail}
+            >
+                <Alert
+                    onClose={handdleCloseSnackbarFail}
+                    severity="error"
+                    sx={{ width: '100%' }}
+                >
+                    Add new {typeAddList.toLowerCase()} fail.
                 </Alert>
             </Snackbar>
         </div>
